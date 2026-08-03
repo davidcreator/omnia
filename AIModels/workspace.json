@@ -1,0 +1,13 @@
+{
+    "workspace_version": "1.0",
+    "name": "AIModels",
+    "database": "Catalog/aihub.db",
+    "models": {
+        "huggingface": "Models/HuggingFace",
+        "gguf": "Models/GGUF",
+        "onnx": "Models/ONNX"
+    },
+    "downloads": "Downloads",
+    "logs": "Logs",
+    "cache": "Cache"
+}
