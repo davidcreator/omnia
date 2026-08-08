@@ -5,7 +5,7 @@ Gerencia downloads de modelos em andamento e concluídos.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 from loguru import logger
@@ -57,7 +57,7 @@ class DAODownloads(DAOBase):
                 model_name,
                 self.STATUS_PENDING,
                 size_bytes,
-                datetime.utcnow().isoformat(),
+                datetime.now(UTC).isoformat(),
             ),
         )
 
@@ -127,7 +127,7 @@ class DAODownloads(DAOBase):
                     THEN ? ELSE completed_at END
             WHERE id = ?
             """,
-            (status, status, datetime.utcnow().isoformat(), download_id),
+            (status, status, datetime.now(UTC).isoformat(), download_id),
         )
 
         logger.debug(f"Download {download_id} status → {status}")

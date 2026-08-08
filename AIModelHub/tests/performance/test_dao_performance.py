@@ -4,6 +4,7 @@ Testes de performance — DAOs com grandes volumes de dados.
 
 import time
 import pytest
+import uuid
 
 from database.dao_models import DAOModels
 from database.dao_history import DAOHistory
@@ -18,12 +19,14 @@ class TestDAOModelsPerformance:
         """Inserção de 100 modelos deve ser rápida."""
 
         def insert_models():
+            # Usa UUID para garantir IDs únicos em cada rodada do benchmark
+            run_id = uuid.uuid4().hex[:8]
             for i in range(100):
                 dao_models.create(
-                    model_id=f"model:{i}",
-                    name=f"Model {i}",
+                    model_id=f"model:{run_id}:{i}",
+                    name=f"Model {run_id} {i}",
                     format="gguf",
-                    path=f"/models/model_{i}.gguf",
+                    path=f"/models/model_{run_id}_{i}.gguf",
                 )
 
         benchmark(insert_models)
@@ -38,7 +41,7 @@ class TestDAOModelsPerformance:
                 path=f"/models/perf_{i}.gguf",
             )
 
-        start = time.perf_counter()
+        start   = time.perf_counter()
         results = dao_models.get_all()
         elapsed = time.perf_counter() - start
 
@@ -56,7 +59,7 @@ class TestDAOModelsPerformance:
                 manufacturer="TestCorp" if i % 2 == 0 else "OtherCorp",
             )
 
-        start = time.perf_counter()
+        start   = time.perf_counter()
         results = dao_models.search("TestCorp")
         elapsed = time.perf_counter() - start
 
@@ -85,7 +88,7 @@ class TestDAOHistoryPerformance:
         for i in range(1000):
             dao_history.add("inference")
 
-        start = time.perf_counter()
+        start   = time.perf_counter()
         results = dao_history.get_recent(limit=50)
         elapsed = time.perf_counter() - start
 

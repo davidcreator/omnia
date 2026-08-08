@@ -4,7 +4,7 @@ Testes de integração — Bootstrap e inicialização completa.
 
 import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 @pytest.mark.integration
@@ -16,9 +16,10 @@ class TestBootstrapIntegration:
         from app.bootstrap import Bootstrap
 
         user_data = tmp_path / "user_data"
-        logs_dir = user_data / "logs"
+        logs_dir  = user_data / "logs"
 
-        with patch("shared.constants.USER_DATA_DIR", user_data):
+        # Patch dentro do módulo bootstrap onde a constante é usada
+        with patch("app.bootstrap.USER_DATA_DIR", user_data):
             bootstrap = Bootstrap()
             bootstrap._step_system_dirs()
 
@@ -32,12 +33,12 @@ class TestBootstrapIntegration:
 
         Settings._instance = None
         settings = Settings()
-        settings.set("workspace.path", str(tmp_path / "AIModels"))
+        workspace = tmp_path / "AIModels"
+        settings.set("workspace.path", str(workspace))
 
         bootstrap = Bootstrap()
         bootstrap._step_workspace()
 
-        workspace = tmp_path / "AIModels"
         assert workspace.exists()
         assert (workspace / "Models" / "GGUF").exists()
         assert (workspace / "Temp").exists()
@@ -55,7 +56,7 @@ class TestBootstrapIntegration:
         workspace = tmp_path / "AIModels"
         settings.set("workspace.path", str(workspace))
 
-        # Cria arquivo na pasta Temp
+        # Cria arquivo na pasta Temp antes do bootstrap
         temp_dir = workspace / "Temp"
         temp_dir.mkdir(parents=True)
         leftover = temp_dir / "leftover.tmp"
@@ -75,11 +76,19 @@ class TestBootstrapIntegration:
         from database.connection import DatabaseConnection
 
         db_file = tmp_path / "test.db"
+
+        # Salva estado original
+        original = DatabaseConnection._connection
         DatabaseConnection._connection = None
 
-        with patch("shared.constants.DATABASE_FILE", db_file):
-            bootstrap = Bootstrap()
-            bootstrap._step_database()
+        try:
+            # Patch dentro do módulo connection onde DATABASE_FILE é usado
+            with patch("database.connection.DATABASE_FILE", db_file):
+                bootstrap = Bootstrap()
+                bootstrap._step_database()
 
-        assert db_file.exists()
-        DatabaseConnection._connection = None
+            assert db_file.exists()
+
+        finally:
+            DatabaseConnection.close()
+            DatabaseConnection._connection = original

@@ -51,26 +51,23 @@ def db_connection():
     from database.schema import SCHEMA_SQL
     from database.connection import DatabaseConnection
 
+    # Salva estado anterior do singleton
+    previous_connection = DatabaseConnection._connection
+
     # Cria conexão em memória
     conn = sqlite3.connect(":memory:", check_same_thread=False)
-    conn.row_factory = None
-
-    # Aplica configurações
     conn.execute("PRAGMA foreign_keys=ON;")
-    conn.execute("PRAGMA journal_mode=WAL;")
-
-    # Aplica schema
     conn.executescript(SCHEMA_SQL)
     conn.commit()
 
-    # Injeta na classe singleton para os testes
+    # Injeta no singleton
     DatabaseConnection._connection = conn
 
     yield conn
 
-    # Cleanup
+    # Cleanup — fecha e restaura estado anterior
     conn.close()
-    DatabaseConnection._connection = None
+    DatabaseConnection._connection = previous_connection
 
 
 @pytest.fixture(scope="function")

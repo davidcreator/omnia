@@ -4,17 +4,15 @@ Aplica automaticamente migrações pendentes na ordem correta.
 """
 
 import sqlite3
-from pathlib import Path
-from shared.logger import logger
-
-from shared.constants import MIGRATIONS_DIR
+import shared.constants as constants          # ← import do módulo, não da constante
+from loguru import logger
 from database.schema import SCHEMA_SQL
 
 
 class MigrationManager:
     """
     Gerencia as migrações do banco de dados.
-    
+
     - Aplica migrações pendentes em ordem sequencial.
     - Registra cada migração aplicada na tabela _migrations.
     - É idempotente: não aplica a mesma migração duas vezes.
@@ -27,10 +25,8 @@ class MigrationManager:
         """Executa todas as migrações pendentes."""
         logger.debug("Verificando migrações pendentes...")
 
-        # Garante que o schema base existe
         self._apply_base_schema()
 
-        # Descobre e aplica migrações pendentes
         pending = self._get_pending_migrations()
 
         if not pending:
@@ -66,23 +62,23 @@ class MigrationManager:
     def _get_pending_migrations(self) -> list[tuple[int, str, str]]:
         """
         Descobre migrações pendentes nos arquivos .sql.
-        
         Formato esperado: 001_nome_da_migracao.sql
-        Retorna: [(versão, nome, sql), ...]
         """
         applied = self._get_applied_versions()
         pending = []
 
-        if not MIGRATIONS_DIR.exists():
-            logger.debug(f"Pasta de migrações não encontrada: {MIGRATIONS_DIR}")
+        # Lê do módulo para o patch funcionar nos testes
+        migrations_dir = constants.MIGRATIONS_DIR
+
+        if not migrations_dir.exists():
+            logger.debug(f"Pasta de migrações não encontrada: {migrations_dir}")
             return pending
 
-        for sql_file in sorted(MIGRATIONS_DIR.glob("*.sql")):
+        for sql_file in sorted(migrations_dir.glob("*.sql")):
             try:
-                # Extrai o número da versão do nome do arquivo
                 version_str = sql_file.stem.split("_")[0]
-                version = int(version_str)
-                name = sql_file.stem
+                version     = int(version_str)
+                name        = sql_file.stem
 
                 if version not in applied:
                     sql = sql_file.read_text(encoding="utf-8")
@@ -90,8 +86,8 @@ class MigrationManager:
 
             except (ValueError, IndexError):
                 logger.warning(
-                    f"Arquivo de migração com nome inválido ignorado: {sql_file.name}. "
-                    "Formato esperado: 001_nome.sql"
+                    f"Arquivo de migração com nome inválido ignorado: "
+                    f"{sql_file.name}. Formato esperado: 001_nome.sql"
                 )
 
         return pending
@@ -103,7 +99,7 @@ class MigrationManager:
         try:
             self._conn.executescript(sql)
             self._conn.execute(
-                "INSERT INTO _migrations (version, name) VALUES (?, ?);",
+                "INSERT OR IGNORE INTO _migrations (version, name) VALUES (?, ?);",
                 (version, name),
             )
             self._conn.commit()

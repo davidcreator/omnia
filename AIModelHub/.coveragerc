@@ -1,0 +1,19 @@
+[run]
+source = .
+omit =
+    tests/*
+    */__init__.py
+    */migrations/*
+    main.py
+    shibokensupport/*
+    signature_bootstrap.py
+    pyscript*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    \.\.\.

@@ -5,7 +5,7 @@ Gerencia as configurações persistidas no banco.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 from loguru import logger
@@ -41,7 +41,7 @@ class DAOSettings(DAOBase):
         else:
             stored_value = str(value)
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
 
         # INSERT OR REPLACE (upsert)
         result = self._execute(

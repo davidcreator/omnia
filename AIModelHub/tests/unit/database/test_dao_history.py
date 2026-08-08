@@ -3,7 +3,7 @@ Testes unitários — database/dao_history.py
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from database.dao_history import DAOHistory
 
 
@@ -94,6 +94,6 @@ class TestDAOHistoryDelete:
 
     def test_clear_before_date(self, dao_history):
         dao_history.add("old_action")
-        future = datetime.utcnow() + timedelta(days=1)
+        future = datetime.now(UTC) + timedelta(days=1)
         dao_history.clear_before(future)
         assert dao_history.count() == 0

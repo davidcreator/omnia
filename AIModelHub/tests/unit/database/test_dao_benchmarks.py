@@ -6,11 +6,28 @@ import pytest
 from database.dao_benchmarks import DAOBenchmarks
 
 
+# ─────────────────────────────────────────
+# Fixture local — Engine de teste
+# ─────────────────────────────────────────
+
+@pytest.fixture
+def sample_engine(db_connection):
+    """Cria uma engine de teste no banco."""
+    db_connection.execute(
+        """
+        INSERT INTO engines (id, name, version, is_active)
+        VALUES ('ollama', 'Ollama', '0.1.0', 1)
+        """
+    )
+    db_connection.commit()
+    return "ollama"
+
+
 @pytest.mark.unit
 class TestDAOBenchmarksCreate:
     """Testa criação de benchmarks."""
 
-    def test_create_basic(self, dao_benchmarks, sample_model):
+    def test_create_basic(self, dao_benchmarks, sample_model, sample_engine):
         benchmark_id = dao_benchmarks.create(
             model_id="llama3:8b",
             engine_id="ollama",
@@ -18,7 +35,7 @@ class TestDAOBenchmarksCreate:
         assert benchmark_id is not None
         assert benchmark_id > 0
 
-    def test_create_with_all_metrics(self, dao_benchmarks, sample_model):
+    def test_create_with_all_metrics(self, dao_benchmarks, sample_model, sample_engine):
         benchmark_id = dao_benchmarks.create(
             model_id="llama3:8b",
             engine_id="ollama",
@@ -34,12 +51,20 @@ class TestDAOBenchmarksCreate:
         assert result["tokens_per_sec"] == pytest.approx(45.3)
         assert result["ram_usage_mb"] == pytest.approx(4096.0)
 
+    def test_create_without_engine(self, dao_benchmarks, sample_model):
+        """Benchmark sem engine deve funcionar (engine_id nullable)."""
+        benchmark_id = dao_benchmarks.create(
+            model_id="llama3:8b",
+            engine_id=None,
+        )
+        assert benchmark_id > 0
+
 
 @pytest.mark.unit
 class TestDAOBenchmarksRead:
     """Testa leitura de benchmarks."""
 
-    def test_get_by_id(self, dao_benchmarks, sample_model):
+    def test_get_by_id(self, dao_benchmarks, sample_model, sample_engine):
         bid = dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=50.0)
         result = dao_benchmarks.get_by_id(bid)
         assert result is not None
@@ -49,25 +74,25 @@ class TestDAOBenchmarksRead:
         result = dao_benchmarks.get_by_id(99999)
         assert result is None
 
-    def test_get_by_model(self, dao_benchmarks, sample_model):
+    def test_get_by_model(self, dao_benchmarks, sample_model, sample_engine):
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=40.0)
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=50.0)
         results = dao_benchmarks.get_by_model("llama3:8b")
         assert len(results) == 2
 
-    def test_get_by_model_limit(self, dao_benchmarks, sample_model):
+    def test_get_by_model_limit(self, dao_benchmarks, sample_model, sample_engine):
         for i in range(5):
             dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=float(i))
         results = dao_benchmarks.get_by_model("llama3:8b", limit=3)
         assert len(results) == 3
 
-    def test_get_latest(self, dao_benchmarks, sample_model):
+    def test_get_latest(self, dao_benchmarks, sample_model, sample_engine):
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=40.0)
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=55.0)
         result = dao_benchmarks.get_latest("llama3:8b", "ollama")
         assert result is not None
 
-    def test_get_average_by_model(self, dao_benchmarks, sample_model):
+    def test_get_average_by_model(self, dao_benchmarks, sample_model, sample_engine):
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=40.0)
         dao_benchmarks.create("llama3:8b", "ollama", tokens_per_sec=60.0)
         result = dao_benchmarks.get_average_by_model("llama3:8b")
@@ -78,7 +103,7 @@ class TestDAOBenchmarksRead:
 class TestDAOBenchmarksDelete:
     """Testa remoção de benchmarks."""
 
-    def test_delete_existing(self, dao_benchmarks, sample_model):
+    def test_delete_existing(self, dao_benchmarks, sample_model, sample_engine):
         bid = dao_benchmarks.create("llama3:8b", "ollama")
         result = dao_benchmarks.delete(bid)
         assert result is True
@@ -88,8 +113,13 @@ class TestDAOBenchmarksDelete:
         result = dao_benchmarks.delete(99999)
         assert result is False
 
-    def test_delete_by_model(self, dao_benchmarks, sample_model):
+    def test_delete_by_model(self, dao_benchmarks, sample_model, sample_engine):
         dao_benchmarks.create("llama3:8b", "ollama")
         dao_benchmarks.create("llama3:8b", "ollama")
         count = dao_benchmarks.delete_by_model("llama3:8b")
         assert count == 2
+
+    def test_count(self, dao_benchmarks, sample_model, sample_engine):
+        dao_benchmarks.create("llama3:8b", "ollama")
+        dao_benchmarks.create("llama3:8b", "ollama")
+        assert dao_benchmarks.count() == 2

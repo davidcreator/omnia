@@ -5,7 +5,7 @@ Gerencia o CRUD completo dos modelos registrados.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 from loguru import logger
@@ -15,7 +15,7 @@ from database.dao_base import DAOBase
 class DAOModels(DAOBase):
     """
     Data Access Object para a tabela `models`.
-    
+
     Fornece operações CRUD completas para gerenciamento
     dos modelos de IA registrados no catálogo.
     """
@@ -47,26 +47,26 @@ class DAOModels(DAOBase):
     ) -> None:
         """
         Cria um novo registro de modelo no banco.
-        
+
         Args:
-            model_id: ID único do modelo (ex: "llama3:8b")
-            name: Nome do modelo (ex: "Llama 3 8B")
-            format: Formato (huggingface, gguf, onnx, etc.)
-            path: Caminho completo do modelo
+            model_id    : ID único do modelo (ex: "llama3:8b")
+            name        : Nome do modelo (ex: "Llama 3 8B")
+            format      : Formato (huggingface, gguf, onnx, etc.)
+            path        : Caminho completo do modelo
             architecture: Arquitetura (llama, mistral, etc.)
             quantization: Quantização (q4_0, q8_0, etc.)
-            size_bytes: Tamanho em bytes
+            size_bytes  : Tamanho em bytes
             manufacturer: Fabricante/organização
-            description: Descrição do modelo
-            metadata: Dicionário com dados extras
+            description : Descrição do modelo
+            metadata    : Dicionário com dados extras
         """
         logger.debug(f"Criando modelo: {model_id} ({name})")
 
-        now = datetime.utcnow().isoformat()
-        
+        now = datetime.now(UTC).isoformat()
+
         self._execute(
             f"""
-            INSERT INSERT INTO {self.TABLE}
+            INSERT INTO {self.TABLE}
             (id, name, format, architecture, quantization,
              size_bytes, path, manufacturer, description,
              is_favorite, created_at, updated_at, last_used_at, metadata)
@@ -91,36 +91,38 @@ class DAOModels(DAOBase):
             f"SELECT * FROM {self.TABLE} WHERE id = ?",
             (model_id,),
         )
-        
+
         if row:
             row["metadata"] = self._deserialize_json(row.get("metadata"))
         return row
 
     def get_all(self) -> list[dict[str, Any]]:
         """Retorna todos os modelos."""
-        rows = self._fetch_all(f"SELECT * FROM {self.TABLE} ORDER BY name")
-        
+        rows = self._fetch_all(
+            f"SELECT * FROM {self.TABLE} ORDER BY name"
+        )
+
         for row in rows:
             row["metadata"] = self._deserialize_json(row.get("metadata"))
         return rows
 
     def get_by_format(self, format: str) -> list[dict[str, Any]]:
-        """Retorna modelos por formato."""
+        """Retorna modelos filtrados por formato."""
         rows = self._fetch_all(
             f"SELECT * FROM {self.TABLE} WHERE format = ? ORDER BY name",
             (format,),
         )
-        
+
         for row in rows:
             row["metadata"] = self._deserialize_json(row.get("metadata"))
         return rows
 
     def get_favorites(self) -> list[dict[str, Any]]:
-        """Retorna modelos favoritos."""
+        """Retorna modelos marcados como favoritos."""
         rows = self._fetch_all(
             f"SELECT * FROM {self.TABLE} WHERE is_favorite = 1 ORDER BY name",
         )
-        
+
         for row in rows:
             row["metadata"] = self._deserialize_json(row.get("metadata"))
         return rows
@@ -133,17 +135,17 @@ class DAOModels(DAOBase):
     ) -> list[dict[str, Any]]:
         """
         Busca modelos por nome, descrição ou fabricante.
-        
+
         Args:
-            query: Texto para busca
-            format: Filtrar por formato (opcional)
+            query       : Texto para busca
+            format      : Filtrar por formato (opcional)
             architecture: Filtrar por arquitetura (opcional)
         """
         sql = f"""
             SELECT * FROM {self.TABLE}
             WHERE (name LIKE ? OR description LIKE ? OR manufacturer LIKE ?)
         """
-        params: list[str] = [
+        params: list[Any] = [
             f"%{query}%", f"%{query}%", f"%{query}%",
         ]
 
@@ -173,11 +175,11 @@ class DAOModels(DAOBase):
     ) -> bool:
         """
         Atualiza campos específicos de um modelo.
-        
+
         Args:
             model_id: ID do modelo a atualizar
-            **changes: Campos a serem atualizados (nome, path, etc.)
-        
+            **changes: Campos a serem atualizados
+
         Returns:
             bool: True se atualizado, False se não encontrado
         """
@@ -197,11 +199,11 @@ class DAOModels(DAOBase):
             updates["metadata"] = self._serialize_json(updates["metadata"])
 
         # Sempre atualiza o timestamp
-        updates["updated_at"] = datetime.utcnow().isoformat()
+        updates["updated_at"] = datetime.now(UTC).isoformat()
 
         # Constrói a query dinamicamente
         set_clause = ", ".join(f"{key} = ?" for key in updates.keys())
-        params = list(updates.values()) + [model_id]
+        params     = list(updates.values()) + [model_id]
 
         result = self._execute(
             f"UPDATE {self.TABLE} SET {set_clause} WHERE id = ?",
@@ -211,18 +213,15 @@ class DAOModels(DAOBase):
         return result > 0
 
     def mark_as_favorite(self, model_id: str, is_favorite: bool = True) -> bool:
-        """Marca/desmarca um modelo como favorito."""
+        """Marca ou desmarca um modelo como favorito."""
         return self.update(model_id, is_favorite=1 if is_favorite else 0)
 
     def mark_as_used(self, model_id: str) -> None:
-        """Registra que o modelo foi usado."""
+        """Registra o uso do modelo atualizando o timestamp."""
+        now = datetime.now(UTC).isoformat()
         self._execute(
             f"UPDATE {self.TABLE} SET last_used_at = ?, updated_at = ? WHERE id = ?",
-            (
-                datetime.utcnow().isoformat(),
-                datetime.utcnow().isoformat(),
-                model_id,
-            ),
+            (now, now, model_id),
         )
 
     # ─────────────────────────────────────────
@@ -238,7 +237,7 @@ class DAOModels(DAOBase):
         return result > 0
 
     # ─────────────────────────────────────────
-    # Contagem
+    # CONTAGEM
     # ─────────────────────────────────────────
 
     def count(self) -> int:

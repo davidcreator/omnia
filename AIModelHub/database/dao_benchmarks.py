@@ -5,7 +5,7 @@ Gerencia resultados de testes de performance.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 from loguru import logger
@@ -57,7 +57,7 @@ class DAOBenchmarks(DAOBase):
             (
                 model_id, engine_id, load_time_ms, tokens_per_sec,
                 ram_usage_mb, vram_usage_mb, cpu_percent, gpu_percent,
-                datetime.utcnow().isoformat(),
+                datetime.now(UTC).isoformat(),
                 self._serialize_json(metadata) if metadata else None,
             ),
         )

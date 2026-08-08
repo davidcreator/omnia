@@ -5,7 +5,7 @@ Registra e consulta ações do usuário no sistema.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Any, Optional
 
 from loguru import logger
@@ -56,7 +56,7 @@ class DAOHistory(DAOBase):
                 engine_id,
                 action,
                 self._serialize_json(details),
-                datetime.utcnow().isoformat(),
+                datetime.now(UTC).isoformat(),
             ),
         )
 
@@ -125,8 +125,8 @@ class DAOHistory(DAOBase):
 
     def get_by_days(self, days: int) -> list[dict[str, Any]]:
         """Retorna registros dos últimos N dias."""
-        start_date = datetime.utcnow() - timedelta(days=days)
-        return self.get_by_date_range(start_date, datetime.utcnow())
+        start_date = datetime.now(UTC) - timedelta(days=days)
+        return self.get_by_date_range(start_date, datetime.now(UTC))
 
     # ─────────────────────────────────────────
     # Agregações
