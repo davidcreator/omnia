@@ -6,9 +6,11 @@ PySide6>=6.7.0
 
 # Utilitários
 python-dotenv>=1.0.0        # Variáveis de ambiente (futuro)
-platformdirs>=4.2.0         # Caminhos padrão por SO (AppData, etc.)
+platformdirs>=4.2.0         # Caminhos padrão por SO
 loguru>=0.7.2               # Sistema de log moderno
 
-# Desenvolvimento
-pytest>=8.2.0               # Testes
+# Testes
+pytest>=8.2.0               # Framework de testes
 pytest-qt>=4.4.0            # Testes de UI Qt
+pytest-cov>=5.0.0           # Cobertura de código
+pytest-mock>=3.14.0         # Mocks e stubs
