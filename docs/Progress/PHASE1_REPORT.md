@@ -319,12 +319,12 @@ Banco	AppData\Local\AIModelHub\omnia.db
 Workspace	C:\Users\David\AIModels
 8. Pontos Pendentes para Fases Futuras
 Pendência	Fase	Descrição
-DAOs	Fase 2	Implementar acesso ao banco via DAOs
+DAOs avançados	Fase 2	Expandir filtros, paginação e consultas especializadas dos DAOs existentes
 Settings do banco	Fase 2	load_from_db() ainda não é chamado
 Scanner	Fase 2	Descoberta automática de modelos
 Engines	Fase 2	EAL + primeiro adaptador (Ollama)
 UI completa	Fase 3	Substituir janela provisória
-Testes	Fase 4	Cobertura unitária e de integração
+Cobertura ampliada	Fase 4	Aumentar cobertura e completar cenários de integração
 9. Atualização do ARCHITECTURE.md
 A criação da camada shared/ foi documentada no
 ARCHITECTURE.md com as seguintes alterações:
