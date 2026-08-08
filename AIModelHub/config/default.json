@@ -1,0 +1,36 @@
+{
+    "general": {
+        "theme": "dark",
+        "language": "pt-BR",
+        "check_updates": true
+    },
+    "workspace": {
+        "path": "~/AIModels",
+        "auto_scan_on_startup": true,
+        "clean_temp_on_startup": true
+    },
+    "database": {
+        "backup_enabled": true,
+        "backup_interval_hours": 24,
+        "wal_mode": true
+    },
+    "ui": {
+        "sidebar_collapsed": false,
+        "window_width": 1280,
+        "window_height": 800,
+        "remember_window_size": true
+    },
+    "engines": {
+        "auto_detect": true,
+        "fallback_enabled": true
+    },
+    "downloads": {
+        "max_concurrent": 2,
+        "verify_hash": true
+    },
+    "logs": {
+        "level": "DEBUG",
+        "max_size_mb": 10,
+        "retention_days": 30
+    }
+}

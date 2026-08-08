@@ -52,7 +52,8 @@ OMNIA/
 │
 ├── AIModelHub/                 # Aplicação
 │   ├── main.py                 # Ponto de entrada
-│   ├── app/                    # Bootstrap, inicialização, lifecycle
+│   ├── app/                    # Bootstrap e lifecycle da aplicação
+│   ├── shared/                 # Infraestrutura compartilhada entre todos os módulos
 │   ├── core/                   # Lógica de negócios central
 │   ├── database/               # SQLite — schemas, migrações, DAOs
 │   ├── engines/                # Engine Abstraction Layer
@@ -105,11 +106,14 @@ Controla o **lifecycle** da aplicação:
 |---|---|
 | `bootstrap.py` | Sequência de inicialização |
 | `lifecycle.py` | Eventos de startup, shutdown, error |
+
+## 4.3 Módulo `shared/`
+| Arquivo | Responsabilidade |
 | `settings.py` | Classe de configurações globais |
 | `constants.py` | Constantes do sistema (paths, versões, defaults) |
 | `logger.py` | Configuração do sistema de log |
 
-## 4.3 Módulo `core/`
+## 4.4 Módulo `core/`
 
 Contém a **lógica de negócios** central, desacoplada da interface:
 
@@ -125,7 +129,7 @@ Contém a **lógica de negócios** central, desacoplada da interface:
 | `agent_manager.py` | Gerenciamento de agentes especializados |
 | `rag_manager.py` | Indexação, embeddings e busca semântica |
 
-## 4.4 Módulo `database/`
+## 4.5 Módulo `database/`
 
 Banco de dados relacional local usando **SQLite**:
 
@@ -140,7 +144,7 @@ Banco de dados relacional local usando **SQLite**:
 | `dao_history.py` | Data Access Object — histórico |
 | `dao_settings.py` | Data Access Object — configurações |
 
-## 4.5 Módulo `engines/`
+## 4.6 Módulo `engines/`
 
 Implementa a **Engine Abstraction Layer (EAL)**:
 
@@ -156,7 +160,7 @@ Implementa a **Engine Abstraction Layer (EAL)**:
 | `lmstudio_engine.py` | Adaptador para LM Studio |
 | `tgwui_engine.py` | Adaptador para Text Generation WebUI |
 
-## 4.6 Módulo `plugins/`
+## 4.7 Módulo `plugins/`
 
 Sistema extensível de plugins:
 
@@ -167,7 +171,7 @@ Sistema extensível de plugins:
 | `plugin_registry.py` | Registro centralizado dos plugins instalados |
 | `hooks.py` | Sistema de hooks para extensão de funcionalidades |
 
-## 4.7 Módulo `ui/`
+## 4.8 Módulo `ui/`
 
 Interface gráfica construída com **PySide6 (Qt for Python)**:
 
@@ -282,15 +286,21 @@ A arquitetura do AIModelHub segue o padrão de **camadas desacopladas**:
 │            Storage Layer                     │
 │        (AIModels/ — filesystem)              │
 └─────────────────────────────────────────────┘
+         ▲ todos consomem ▲
+┌─────────────────────────────────────────────┐
+│             Shared Layer                     │
+│   (constants, logger, settings)              │
+└─────────────────────────────────────────────┘
 ```
 
 ### Regras de dependência:
 
 1. **UI → Service**: A interface chama apenas métodos do `core/`.
 2. **Service → Abstraction + Data**: O core acessa engines via EAL e dados via DAOs.
-3. **Abstraction → External**: Engines se comunicam com backends externos (Ollama, llama.cpp, etc.).
-4. **Data → Storage**: DAOs leem/gravam no SQLite; o workspace gerencia o filesystem.
-5. **Nenhuma camada pula outra**: UI nunca acessa o banco diretamente. Engines nunca manipulam a UI.
+3. **Abstraction → External**: Engines se comunicam com backends externos.
+4. **Data → Storage**: DAOs leem/gravam no SQLite; workspace gerencia o filesystem.
+5. **Shared → Todos**: `shared/` é consumido por qualquer camada, mas não importa de nenhuma.
+6. **Nenhuma camada pula outra**: UI nunca acessa o banco diretamente. Engines nunca manipulam a UI.
 
 ---
 
